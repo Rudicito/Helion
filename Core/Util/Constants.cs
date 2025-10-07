@@ -207,6 +207,8 @@ public static class Constants
         public const string WeaponGroup3 = "WeaponGroup3";
         [Input(InputType.WeaponsAndInventory)]
         public const string WeaponGroup4 = "WeaponGroup4";
+        [Input(InputType.WeaponsAndInventory)]
+        public const string Cat = "Cat";
 
         // Automap
         [Input(InputType.Automap, "Automap")]

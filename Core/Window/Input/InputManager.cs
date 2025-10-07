@@ -39,6 +39,7 @@ public class InputManager : IInputManager
     public DynamicArray<InputKey> GetEvents() => m_events;
 
     public IGameControlAdapter? AnalogAdapter { get; set; }
+    public ITouchAdapter? TouchAdapter { get; set; }
 
     public InputManager()
     {
@@ -219,6 +220,7 @@ public class InputManager : IInputManager
         if (pollKeys)
         {
             AnalogAdapter?.Poll();
+            TouchAdapter?.Poll();
             CreateCurrentInputKeys();
         }
 

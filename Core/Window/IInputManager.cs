@@ -15,6 +15,7 @@ public interface IInputManager
     public int Scroll { get; }
     public ReadOnlySpan<char> TypedCharacters { get; }
     public IGameControlAdapter? AnalogAdapter { get; }
+    public ITouchAdapter? TouchAdapter { get; }
     bool IsKeyDown(Key key);
     bool IsKeyPrevDown(Key key);
     bool IsKeyHeldDown(Key key);

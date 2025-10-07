@@ -88,6 +88,7 @@
 
   <ItemGroup>
     <PackageReference Include="Helion.SDLControllerWrapper" Version="2.0.0.0" />
+    <ProjectReference Include="..\..\evdev-sharp\EvDevSharp\EvDevSharp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

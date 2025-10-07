@@ -32,4 +32,10 @@
     <PackageReference Include="xBRZNet" Version="1.2.0" />
     <PackageReference Include="zdbspSharp" Version="1.0.6" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="EvDevSharp">
+      <HintPath>..\..\evdev-sharp\EvDevSharp\bin\Debug\net9.0\EvDevSharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

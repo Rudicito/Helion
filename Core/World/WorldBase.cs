@@ -1601,6 +1601,46 @@ public abstract partial class WorldBase : IWorld
             FireHitscan(shooter, angle, newPitch, distance, damage);
         }
     }
+    
+    public virtual void FirePlayerHitscanBulletsWithOffset(Player shooter, int bulletCount, double spreadAngleRadians, double spreadPitchRadians, double pitch, double distance, bool autoAim,
+        Func<DamageFuncParams, int>? damageFunc = null, DamageFuncParams damageParams = default, double angleOffset = 0)
+    {
+        double originalPitch = pitch;
+        double shooterAngle = shooter.AngleRadians + angleOffset;
+
+        damageFunc ??= m_defaultDamageAction;
+
+        if (autoAim)
+        {
+            Vec3D start = shooter.HitscanAttackPos;
+            if (GetAutoAimAngle(shooter, start, shooterAngle, distance, out double autoAimPitch, out _, out _,
+                    tracers: Constants.AutoAimTracers))
+            {
+                pitch = autoAimPitch;
+            }
+        }
+
+        if (Config.Developer.Render.Tracers && shooter.PlayerObj != null)
+        {
+            shooter.PlayerObj.Tracers.AddLookPath(shooter.HitscanAttackPos, shooterAngle, originalPitch, distance, Gametick);
+            shooter.PlayerObj.Tracers.AddAutoAimPath(shooter.HitscanAttackPos, shooterAngle, pitch, distance, Gametick);
+        }
+
+        if (!damageParams.IgnorePlayerRefire && !shooter.Refire && bulletCount == 1)
+        {
+            int damage = damageFunc(damageParams);
+            FireHitscan(shooter, shooterAngle, pitch, distance, damage);
+            return;
+        }
+
+        for (int i = 0; i < bulletCount; i++)
+        {
+            int damage = damageFunc(damageParams);
+            double angle = shooterAngle + (m_random.NextDiff() * spreadAngleRadians / 255);
+            double newPitch = pitch + (m_random.NextDiff() * spreadPitchRadians / 255);
+            FireHitscan(shooter, angle, newPitch, distance, damage);
+        }
+    }
 
     private int DefaultDamage(DamageFuncParams damageParams) => 5 * ((m_random.NextByte() % 3) + 1);
 

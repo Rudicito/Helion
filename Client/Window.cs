@@ -42,6 +42,7 @@ public class Window : GameWindow, IWindow
     private readonly InputManager m_inputManager = new();
     private readonly SpanString m_textInput = new();
     public readonly ControllerAdapter JoystickAdapter;
+    public readonly TouchAdapter TouchAdapter;
 
     public Dimension ClientDimension => new((int)(ClientSize.X * m_clientScaling.X), (int)(ClientSize.Y * m_clientScaling.Y));
     private bool m_firstResizeEvent = true;
@@ -82,6 +83,8 @@ public class Window : GameWindow, IWindow
             (float)m_config.Controller.GyroSmoothingThreshold,
             m_config.Controller.GyroNoise,
             m_config.Controller.GyroDrift,
+            m_inputManager);
+        TouchAdapter = new TouchAdapter(
             m_inputManager);
         m_config.Controller.GyroSmoothingEnabled.OnChanged += OnGyroSmoothEnableChanged;
         m_config.Controller.GyroSmoothingThreshold.OnChanged += OnGyroSmoothFactorChanged;

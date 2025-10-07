@@ -11,6 +11,7 @@ using Helion.World.Entities.Players;
 using Helion.World.StatusBar;
 using System;
 using System.Collections.Generic;
+using Helion.Util.Loggers;
 using static Helion.Util.Constants;
 
 namespace Helion.Layer.Worlds;
@@ -99,6 +100,8 @@ public partial class WorldLayer
                     HandleAutoMapInput(input);
                 HandleCommandInput(input);
                 World.HandleKeyInput(input);
+                
+                HandleCatInput(input);
             }
             World.HandleMouseMovement(input);
         }
@@ -315,5 +318,41 @@ public partial class WorldLayer
 
         if (m_config.Hud.StatusBarSize.Set(next) == ConfigSetResult.Set)
             World.SoundManager.PlayStaticSound(Constants.MenuSounds.Change);
+    }
+
+    private static int DamageFunc(DamageFuncParams p) => 121;
+
+    private static float DegreesToRads(float degrees) => (float)(degrees / 360 * (2 * Math.PI));
+    private void HandleCatInput(IConsumableInput input)
+    {
+        var aspectRatio = m_hudContext.Dimension.Width / (float)m_hudContext.Dimension.Height;
+
+        var fingers = input.Manager.TouchAdapter?.GetTouch ?? new List<Vec2F>();
+        
+        foreach (var finger in fingers)
+        {
+            HelionLog.Info($"{finger.X} - {finger.Y}");
+            var offsetAngleX = GetAngleForPixel(1 - finger.X / 1920, aspectRatio);
+            var offsetAngleY = GetYawAngleForPixel(1 - finger.Y / 1080, aspectRatio);
+            World.FirePlayerHitscanBulletsWithOffset(Player, 1, 0, 0, offsetAngleY, 2048, true, DamageFunc, default, offsetAngleX);
+        }
+    }
+    
+    /// <summary>
+    /// Only work for a fov set to 90.
+    /// </summary>
+    private static float GetAngleForPixel(float x, float aspectRatio)
+    {
+        float theta = (float)(Math.Atan(2 * (x - 0.5) * (3.0 / 4.0) * aspectRatio) * (180.0 / Math.PI));
+        return DegreesToRads(theta);
+    }
+    
+    /// <summary>
+    /// Only work for a fov set to 90.
+    /// </summary>
+    private static float GetYawAngleForPixel(float x, float aspectRatio)
+    {
+        float theta = (float)(Math.Atan(2 * (x - 0.5) * (3.0 / 4.0) * aspectRatio) * (180.0 / Math.PI));
+        return DegreesToRads(theta);
     }
 }
