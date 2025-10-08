@@ -3,7 +3,8 @@ using System.Linq;
 using System.Runtime.Versioning;
 using EvDevSharp;
 using Helion.Geometry.Vectors;
-using MtSlot = System.Int32;
+using Helion.Util.Loggers;
+using MtSlot = int;
 
 namespace Helion.Window.Input;
 
@@ -12,8 +13,8 @@ public class TouchAdapter : ITouchAdapter
     private EvDevDevice touchScreen;
     
     /// <summary>
-    /// Dictionary to get raw touch input value.
-    /// The key is the MtSlot.
+    /// Dictionary to get raw touch input value.<br/>
+    /// The key is the MtSlot.<br/>
     /// The value is in the format 19200, which means 1920.0px.
     /// </summary>
     private readonly Dictionary<MtSlot, Vec2I> touchesByMtSlot = new();
@@ -25,8 +26,7 @@ public class TouchAdapter : ITouchAdapter
     /// </summary>
     public IReadOnlyList<Vec2F> GetTouch => touchesList;
 
-    // Think it should be 0 at the start when we don't know yet the MtSlot
-    private int currentMtSlot;
+    private MtSlot? currentMtSlot;
 
     [SupportedOSPlatform("linux")]
     public TouchAdapter(InputManager inputManager)
@@ -45,16 +45,18 @@ public class TouchAdapter : ITouchAdapter
                     break;
 
                 case EvDevAbsoluteAxisCode.ABS_MT_POSITION_X:
-                    AddOrUpdateX(currentMtSlot, e.Value);
+                    if (currentMtSlot.HasValue)
+                        AddOrUpdateX(currentMtSlot.Value, e.Value);
                     break;
 
                 case EvDevAbsoluteAxisCode.ABS_MT_POSITION_Y:
-                    AddOrUpdateY(currentMtSlot, e.Value);
+                    if (currentMtSlot.HasValue)
+                        AddOrUpdateY(currentMtSlot.Value, e.Value);
                     break;
 
                 case EvDevAbsoluteAxisCode.ABS_MT_TRACKING_ID:
-                    if (e.Value == -1)
-                        Remove(currentMtSlot);
+                    if (currentMtSlot.HasValue && e.Value == -1)
+                        Remove(currentMtSlot.Value);
                     break;
             }
         };
@@ -91,6 +93,20 @@ public class TouchAdapter : ITouchAdapter
 
     private void Remove(MtSlot mtSlot)
     {
-        touchesByMtSlot.Remove(mtSlot);
+        if (!touchesByMtSlot.Remove(mtSlot))
+            HelionLog.Debug("TouchAdapter tried remove unexisted slot : " + mtSlot);
+    }
+
+    private string TouchesByMtSlotToString()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var kvp in touchesByMtSlot)
+        {
+            sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"MtSlot: {kvp.Key}, Value : ({kvp.Value.X}, {kvp.Value.Y})");
+        }
+        
+        sb.AppendLine();
+        
+        return sb.ToString();
     }
 }
