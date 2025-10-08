@@ -325,15 +325,15 @@ public partial class WorldLayer
     private static float DegreesToRads(float degrees) => (float)(degrees / 360 * (2 * Math.PI));
     private void HandleCatInput(IConsumableInput input)
     {
-        var aspectRatio = m_hudContext.Dimension.Width / (float)m_hudContext.Dimension.Height;
+        var aspectRatio = m_hudContext.Dimension.AspectRatio;
 
         var fingers = input.Manager.TouchAdapter?.GetTouch ?? new List<Vec2F>();
         
         foreach (var finger in fingers)
         {
             HelionLog.Info($"{finger.X} - {finger.Y}");
-            var offsetAngleX = GetAngleForPixel(1 - finger.X / 1920, aspectRatio);
-            var offsetAngleY = GetYawAngleForPixel(1 - finger.Y / 1080, aspectRatio);
+            var offsetAngleX = GetYawAngleForPixel(1 - finger.X / 1920, aspectRatio);
+            var offsetAngleY = GetPitchAngleForPixel(1 - finger.Y / 1080, aspectRatio);
             World.FirePlayerHitscanBulletsWithOffset(Player, 1, 0, 0, offsetAngleY, 2048, true, DamageFunc, default, offsetAngleX);
         }
     }
@@ -341,18 +341,18 @@ public partial class WorldLayer
     /// <summary>
     /// Only work for a fov set to 90.
     /// </summary>
-    private static float GetAngleForPixel(float x, float aspectRatio)
+    private float GetYawAngleForPixel(float x, float aspectRatio)
     {
-        float theta = (float)(Math.Atan(2 * (x - 0.5) * (3.0 / 4.0) * aspectRatio) * (180.0 / Math.PI));
-        return DegreesToRads(theta);
+        float theta = (float)Math.Atan(2 * (x - 0.5) * (3.0 / 4.0) * aspectRatio);
+        return theta;
     }
     
     /// <summary>
     /// Only work for a fov set to 90.
     /// </summary>
-    private static float GetYawAngleForPixel(float x, float aspectRatio)
+    private static float GetPitchAngleForPixel(float y, float aspectRatio)
     {
-        float theta = (float)(Math.Atan(2 * (x - 0.5) * (3.0 / 4.0) * aspectRatio) * (180.0 / Math.PI));
-        return DegreesToRads(theta);
+        float theta = (float)Math.Atan(2 * (y - 0.5) * (1 / aspectRatio));
+        return theta;
     }
 }
