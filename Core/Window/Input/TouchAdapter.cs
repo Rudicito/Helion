@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -22,9 +23,9 @@ public class TouchAdapter : ITouchAdapter
     private readonly List<Vec2F> touchesList = new();
     
     /// <summary>
-    /// The list of touches (fingers) on the screen
+    /// Return the list of touches (fingers) on the screen
     /// </summary>
-    public IReadOnlyList<Vec2F> GetTouch => touchesList;
+    public IReadOnlyList<Vec2F> GetTouch() => touchesList;
 
     private MtSlot? currentMtSlot;
 
@@ -33,35 +34,43 @@ public class TouchAdapter : ITouchAdapter
     {
         inputManager.TouchAdapter = this;
 
-        touchScreen = EvDevDevice.GetDevices().First(d => d.GuessedDeviceType == EvDevGuessedDeviceType.TouchScreen && d.Name == "Touch passthrough");
-
-        touchScreen.OnAbsoluteEvent += (_, e) =>
+        try
         {
-            // Super good doc: https://www.kernel.org/doc/Documentation/input/multi-touch-protocol.txt
-            switch (e.Axis)
+            touchScreen = EvDevDevice.GetDevices().First(d =>
+                d.GuessedDeviceType == EvDevGuessedDeviceType.TouchScreen && d.Name == "Touch passthrough");
+
+            touchScreen.OnAbsoluteEvent += (_, e) =>
             {
-                case EvDevAbsoluteAxisCode.ABS_MT_SLOT:
-                    currentMtSlot = e.Value;
-                    break;
+                // Super good doc: https://www.kernel.org/doc/Documentation/input/multi-touch-protocol.txt
+                switch (e.Axis)
+                {
+                    case EvDevAbsoluteAxisCode.ABS_MT_SLOT:
+                        currentMtSlot = e.Value;
+                        break;
 
-                case EvDevAbsoluteAxisCode.ABS_MT_POSITION_X:
-                    if (currentMtSlot.HasValue)
-                        AddOrUpdateX(currentMtSlot.Value, e.Value);
-                    break;
+                    case EvDevAbsoluteAxisCode.ABS_MT_POSITION_X:
+                        if (currentMtSlot.HasValue)
+                            AddOrUpdateX(currentMtSlot.Value, e.Value);
+                        break;
 
-                case EvDevAbsoluteAxisCode.ABS_MT_POSITION_Y:
-                    if (currentMtSlot.HasValue)
-                        AddOrUpdateY(currentMtSlot.Value, e.Value);
-                    break;
+                    case EvDevAbsoluteAxisCode.ABS_MT_POSITION_Y:
+                        if (currentMtSlot.HasValue)
+                            AddOrUpdateY(currentMtSlot.Value, e.Value);
+                        break;
 
-                case EvDevAbsoluteAxisCode.ABS_MT_TRACKING_ID:
-                    if (currentMtSlot.HasValue && e.Value == -1)
-                        Remove(currentMtSlot.Value);
-                    break;
-            }
-        };
-        
-        touchScreen.StartMonitoring();
+                    case EvDevAbsoluteAxisCode.ABS_MT_TRACKING_ID:
+                        if (currentMtSlot.HasValue && e.Value == -1)
+                            Remove(currentMtSlot.Value);
+                        break;
+                }
+            };
+
+            touchScreen.StartMonitoring();
+        }
+        catch (InvalidOperationException e)
+        {
+            HelionLog.Warn("Touch screen device not found.");
+        }
     }
     
     public void Poll()

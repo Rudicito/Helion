@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using Helion.Geometry;
 using Helion.Geometry.Boxes;
 using Helion.Graphics;
@@ -13,6 +14,7 @@ using Helion.Resources;
 using Helion.Resources.Archives.Collection;
 using Helion.Util;
 using Helion.Util.Configs;
+using SixLabors.ImageSharp.PixelFormats;
 using Font = Helion.Graphics.Fonts.Font;
 using Image = Helion.Graphics.Image;
 
@@ -54,6 +56,8 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
     public GLTextureType WhiteTexture { get; }
 
     public GLTextureType BlackTexture { get; }
+    
+    public GLTextureType CatPointerTexture { get; }
 
     /// <summary>
     /// The null sprite rotation for when a sprite cannot be found.
@@ -75,6 +79,23 @@ public abstract class GLTextureManager<GLTextureType> : IRendererTextureManager
         BlackTexture = GenerateTexture(Image.CreateBlackImage(), "NULLBLACK", ResourceNamespace.Global);
         NullSpriteRotation = CreateNullSpriteRotation();
         NullFont = CreateNullFont();
+
+        const string CatPointerPath = "/home/rudicito/Images/cross-6.png";
+        
+        try
+        {
+            if (!File.Exists(CatPointerPath))
+                throw new Exception("Failed to find fish image");
+            
+            using FileStream dataStream = File.OpenRead(CatPointerPath);
+            using SixLabors.ImageSharp.Image<Rgba32> pngImage = SixLabors.ImageSharp.Image.Load<Rgba32>(dataStream);
+            var image = Image.FromImageSharp(pngImage) ?? throw new Exception("Failed to load fish image");
+            CatPointerTexture = GenerateTexture(image, "CATPOINTER", ResourceNamespace.Global);
+        }
+        catch
+        {
+            CatPointerTexture = WhiteTexture;
+        }
     }
 
     private SpriteRotation CreateNullSpriteRotation()

@@ -322,12 +322,11 @@ public partial class WorldLayer
 
     private static int DamageFunc(DamageFuncParams p) => 121;
 
-    private static float DegreesToRads(float degrees) => (float)(degrees / 360 * (2 * Math.PI));
     private void HandleCatInput(IConsumableInput input)
     {
         var aspectRatio = m_hudContext.Dimension.AspectRatio;
 
-        var fingers = input.Manager.TouchAdapter?.GetTouch ?? new List<Vec2F>();
+        var fingers = input.Manager.TouchAdapter?.GetTouch() ?? new List<Vec2F>();
         
         foreach (var finger in fingers)
         {

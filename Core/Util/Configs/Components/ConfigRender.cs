@@ -119,7 +119,7 @@ public class ConfigRender: ConfigElement<ConfigRender>
     public readonly ConfigValue<RenderLightMode> LightMode = new(RenderLightMode.Smooth);
 
     [ConfigInfo("Added light level offset.")]
-    [OptionMenu(OptionSectionType.Render, "Extra Lighting", sliderMin: 0, sliderMax: 10.0, sliderStep: .1)]
+    [OptionMenu(OptionSectionType.Render, "Extra Lighting", sliderMin: -10, sliderMax: 10.0, sliderStep: .1)]
     public readonly ConfigValue<int> ExtraLight = new(0);
 
     [ConfigInfo("Draw everything at full brightness.")]
@@ -180,6 +180,11 @@ public class ConfigRender: ConfigElement<ConfigRender>
     [OptionMenu(OptionSectionType.Render, "", disabled: true, spacer: true)]
     public readonly ConfigValueHeader HealthBarHeader = new("Health Bar");
     public readonly ConfigRenderHealthBar HealthBar = new();
+    
+    [ConfigInfo("", save: false, legacy: true)]
+    [OptionMenu(OptionSectionType.Render, "Fish Path", disabled: false, spacer: true)]
+    public readonly ConfigValue<string> FishPath = new("");
+    
 
     // Settings below are believed to be less frequently used and thus are not on the menus.
 

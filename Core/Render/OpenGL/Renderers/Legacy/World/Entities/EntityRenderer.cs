@@ -17,6 +17,7 @@ using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Helion.Perlin;
 
 namespace Helion.Render.OpenGL.Renderers.Legacy.World.Entities;
 
@@ -313,6 +314,65 @@ public class EntityRenderer : IDisposable
 
         if (m_healthBars && entity.Flags.Shootable && (m_healthBarLimit <= 0 || m_healthBarLimit <= entity.Properties.Health))
             RenderHealthBar(entity, texture, offsetZ, vertex);
+        
+        if (entity.Flags.IsMonster && !entity.Flags.Corpse)
+        {
+            RenderCatPointer(texture, vertex, entity, position);
+        }
+    }
+    
+    private void RenderCatPointer(GLLegacyTexture entityTexture, in EntityVertex entityVertex, in Entity entity,
+        in Vec2D position)
+    {
+        Vec3D centerBottom = entity.Position;
+        Vec2D entityPos = new(centerBottom.X, centerBottom.Y);
+        Vec2D nudgeAmount = default;
+
+        var catPointerTexture = m_textureManager.CatPointerTexture;
+
+        if (m_spriteZCheck)
+        {
+            var spritePosKey = new SpritePosKey(entityPos, -1);
+            if (m_spriteRenderPositions.Add(spritePosKey))
+            {
+                var nudge = NudgeFactor * Math.Sqrt(entity.RenderDistanceSquared);
+                var angle = Math.Atan2(centerBottom.Y - position.Y, centerBottom.X - position.X);
+                nudgeAmount.X = Math.Cos(angle) * nudge;
+                nudgeAmount.Y = Math.Sin(angle) * nudge;
+            }
+        }
+        
+        // Calculate offset to position cat pointer in the center of the monster
+        var catPointerOffsetX = catPointerTexture.Width / 2;
+        var catPointerOffsetZ = entityTexture.Height / 2 - catPointerTexture.Height / 2;
+        
+        // Use perlin noise to move the pointer chaotically
+        int maxDeviation = entityTexture.Height / 2;
+        float time = entity.World.Gametick * 0.075f;
+        var (x, y) = IcariaNoise.GradientNoiseVec2(time, time + 1000f, entity.Id);
+        catPointerOffsetX += (int)(x * maxDeviation);
+        catPointerOffsetZ += (int)(y * maxDeviation);
+        
+        // Get render data for translucent rendering
+        var renderData = m_dataManager.GetByRenderStyle(RenderStyle.Translucent, catPointerTexture);
+        var arrayData = renderData.ArrayData;
+        int length = arrayData.Length;
+        arrayData.EnsureCapacity(length + 1);
+    
+        ref var catPointerVertex = ref arrayData.Data[length];
+        
+        catPointerVertex.Pos.X = (float)(entityVertex.Pos.X - nudgeAmount.X);
+        catPointerVertex.Pos.Y = (float)(entityVertex.Pos.Y - nudgeAmount.Y);
+        catPointerVertex.Pos.Z = (float)entityVertex.Pos.Z;
+        catPointerVertex.PrevPos.X = (float)(entityVertex.PrevPos.X - nudgeAmount.X);
+        catPointerVertex.PrevPos.Y = (float)(entityVertex.PrevPos.Y - nudgeAmount.Y);
+        catPointerVertex.PrevPos.Z = (float)entityVertex.PrevPos.Z;
+        
+        catPointerVertex.Options = VertexOptions.Entity(1f, 0, 0, 0, 255); // 70% alpha, full brightness
+        catPointerVertex.ColorMapIndex = entityVertex.ColorMapIndex;
+        catPointerVertex.OffsetXYZ = VertexOptions.EntityXYZ(catPointerOffsetX, catPointerOffsetZ);
+        
+        arrayData.Length = length + 1;
     }
 
     private void RenderHealthBar(Entity entity, GLLegacyTexture texture, float offsetZ, in EntityVertex entityVertex)

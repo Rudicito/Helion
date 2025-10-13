@@ -6,6 +6,6 @@ namespace Helion.Window.Input;
 public interface ITouchAdapter
 {
     void Poll();
-    
-    IReadOnlyList<Vec2F> GetTouch { get; }
+
+    IReadOnlyList<Vec2F> GetTouch();
 }
